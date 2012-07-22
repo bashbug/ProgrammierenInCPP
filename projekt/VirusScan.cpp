@@ -3,7 +3,14 @@
 // Author: Anastasia Tondera <tonderaa@informatik.uni-freiburg.de>.
 
 #include <getopt.h>
+#include <iostream>
+#include <fstream>
+#include <string>
 #include "./VirusScan.h"
+
+using std::ifstream;
+using std::cout;
+using std::endl;
 
 // ____________________________________________________________________________
 VirusScan::VirusScan() {
@@ -34,7 +41,7 @@ VirusScan::~VirusScan() {
   _inputLine = NULL;
   _infectedFiles.clear();
   _cleanFiles.clear();
-  _scanningTime = NULL;
+  _scanningTime = -1;
 }
 
 // ____________________________________________________________________________
@@ -77,5 +84,34 @@ void VirusScan::printUsageAndExit() {
 }
 
 // ____________________________________________________________________________
-// void VirusScan::readVirusSignatures(const char* inputFileName) {
-// }
+void VirusScan::readVirusSignatures(const char* virusSignaturesFileName) {
+  string line;
+  ifstream inputeFile(virusSignaturesFileName);
+  if (inputeFile.is_open()) {
+    while (inputeFile.good()) {
+      getline(inputeFile, line);
+      // split the input line in virusname and -signature.
+      splitVirusSignature(line);
+    }
+    printf("%s\n", _virusNames[0].c_str());
+    inputeFile.close();
+  }
+}
+
+// ____________________________________________________________________________
+void VirusScan::splitVirusSignature(string line) {
+  size_t pos;
+  // find position of the tabulator, which seperates name an signatur.
+  pos = line.find('\t');
+  _virusNames.push_back(line.substr(0, pos));
+
+  string sig;
+  sig = line.substr(pos+1);
+
+  // remove \n at the end of every line.
+  if (!sig.empty() && sig[sig.size() - 1] == '\n') {
+    sig.erase(sig.size() - 1);
+  }
+
+  _virusSignatures.push_back(sig);
+}
