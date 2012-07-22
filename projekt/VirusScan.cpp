@@ -34,19 +34,17 @@ VirusScan::~VirusScan() {
   _inputLine = NULL;
   _infectedFiles.clear();
   _cleanFiles.clear();
-  _scanningTime = -1;
+  _scanningTime = NULL;
 }
 
 // ____________________________________________________________________________
 void VirusScan::parseCommandLineArguments(int argc, char** argv) {
   struct option options[] = {
-    { "--virusSignatures", 1, NULL, 'v' },
-    { "--log-file", 1, NULL, 'l' },
+    { "virusSignatures", 1, NULL, 'v' },
+    { "log-file", 1, NULL, 'l' },
     { NULL, 0, NULL, 0 }
   };
-
   optind = 1;  // if the loop starts again, than optind = X without reset
-
   while (true) {
     char opt = getopt_long(argc, argv, "v:l:", options, NULL);
     if (opt == -1) break;
@@ -59,12 +57,11 @@ void VirusScan::parseCommandLineArguments(int argc, char** argv) {
         break;
     }
   }
-
-  // if (argc <= 2) printUsageAndExit();
-  // // every non-option argument is interpreted as an inputfile
-  // for (int i = 0; i < argc-optind; i++) {
-  //   _inputFileNames.push_back(argv[optind + i]);
-  // }
+  if (argc <= 2) printUsageAndExit();
+  // every non-option argument is interpreted as an inputfile
+  for (int i = 0; i < argc-optind; i++) {
+    _inputFileNames.push_back(argv[optind + i]);
+  }
 }
 
 // _____________________________________________________________________________
@@ -80,5 +77,5 @@ void VirusScan::printUsageAndExit() {
 }
 
 // ____________________________________________________________________________
-void VirusScan::readVirusSignatures(const char* inputFileName) {
-}
+// void VirusScan::readVirusSignatures(const char* inputFileName) {
+// }
