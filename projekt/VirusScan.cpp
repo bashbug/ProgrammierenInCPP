@@ -3,6 +3,7 @@
 // Author: Anastasia Tondera <tonderaa@informatik.uni-freiburg.de>.
 
 #include <getopt.h>
+#include <ios>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -86,16 +87,16 @@ void VirusScan::printUsageAndExit() {
 // ____________________________________________________________________________
 void VirusScan::readVirusSignatures(const char* virusSignaturesFileName) {
   string line;
-  ifstream inputeFile(virusSignaturesFileName);
-  if (inputeFile.is_open()) {
-    while (inputeFile.good()) {
-      getline(inputeFile, line);
-      // split the input line in virusname and -signature.
-      splitVirusSignature(line);
-    }
-    printf("%s\n", _virusNames[0].c_str());
-    inputeFile.close();
+  ifstream inputFile;
+  inputFile.open(virusSignaturesFileName);
+  while (false == inputFile.eof) {
+    getline(inputFile, line);
+    // l ine = "test";
+    printf("%s\n", line.c_str());
+    // split the input line in virusname and -signature.
+    splitVirusSignature(line);
   }
+  inputFile.close();
 }
 
 // ____________________________________________________________________________
