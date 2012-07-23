@@ -108,6 +108,7 @@ TEST(VirusScanTest, readVirusSignatures) {
     "198b541bb80157cd21b43ecd2132ed8a4c18\n");
   fprintf(inputFile, "_0017_0001_001\tb3005a8b4e27b440cd21e8c2045a59b440cd21e8"
     "1902b440cd21b8004233c999cd218bd6b90300\n");
+  fclose(inputFile);
 
   VirusScan v;
   int argc = 4;
