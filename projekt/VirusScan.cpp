@@ -10,6 +10,7 @@
 #include "./VirusScan.h"
 
 using std::ifstream;
+using std::iostream;
 using std::cout;
 using std::endl;
 
@@ -88,11 +89,11 @@ void VirusScan::printUsageAndExit() {
 void VirusScan::readVirusSignatures(const char* virusSignaturesFileName) {
   string line;
   ifstream inputFile;
-  inputFile.open(virusSignaturesFileName);
-  while (false == inputFile.eof) {
+  inputFile.open("virus-signatures.TMP.txt");
+  // ios::good returns true if none of the stream's error flags
+  // (eofbit, failbit and badbit) are set.
+  while (inputFile.good()) {
     getline(inputFile, line);
-    // l ine = "test";
-    printf("%s\n", line.c_str());
     // split the input line in virusname and -signature.
     splitVirusSignature(line);
   }
@@ -113,6 +114,23 @@ void VirusScan::splitVirusSignature(string line) {
   if (!sig.empty() && sig[sig.size() - 1] == '\n') {
     sig.erase(sig.size() - 1);
   }
+  // check if any siganture has special operators like '?*{}'.
+  checkSignature(sig);
+}
 
-  _virusSignatures.push_back(sig);
+// ____________________________________________________________________________
+void VirusScan::checkSignature(string sig) {
+  // if the content is not found, the member value npos is returned.
+  // npos indicates the end of the string.
+  size_t npos = -1;
+
+  if (sig.find('?') != npos) {
+    _signaturesWithQuestion.push_back(sig);
+  } else if (sig.find('*') != npos) {
+    _signaturesWithStar.push_back(sig);
+  } else if (sig.find(123) != npos) {
+    _signaturesWithBracket.push_back(sig);
+  } else {
+    _virusSignatures.push_back(sig);
+  }
 }
