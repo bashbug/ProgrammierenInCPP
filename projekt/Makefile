@@ -1,5 +1,5 @@
 CXX = g++ -Wall -g
-OBJECTS = VirusScan.o
+OBJECTS = VirusScan.o Trie.o Node.o
 PROG = VirusScan
 HEADERS = $(wildcard *.h)
 

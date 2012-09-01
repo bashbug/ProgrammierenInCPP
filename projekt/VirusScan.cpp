@@ -6,42 +6,25 @@
 #include <ios>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
+#include "./Node.h"
+#include "./Trie.h"
 #include "./VirusScan.h"
 
 using std::ifstream;
 using std::iostream;
 using std::vector;
+using std::string;
+using std::stringstream;
 
 // ____________________________________________________________________________
 VirusScan::VirusScan() {
-  _inputFileNames.clear();
-  _inputFileName = NULL;
-  _logFileName = NULL;
-  _virusSignaturesFileName = NULL;
-  _virusNames.clear();
-  _virusSignatures.clear();
-  _signature = NULL;
-  _virus = NULL;
-  _infectedFiles.clear();
-  _cleanFiles.clear();
-  _scanningTime = -1;
 }
 
 // ____________________________________________________________________________
 VirusScan::~VirusScan() {
-  _inputFileNames.clear();
-  _inputFileName = NULL;
-  _logFileName = NULL;
-  _virusSignaturesFileName = NULL;
-  _virusNames.clear();
-  _virusSignatures.clear();
-  _signature = NULL;
-  _virus = NULL;
-  _infectedFiles.clear();
-  _cleanFiles.clear();
-  _scanningTime = -1;
 }
 
 // ____________________________________________________________________________
@@ -84,15 +67,29 @@ void VirusScan::printUsageAndExit() {
 }
 
 // ____________________________________________________________________________
+void VirusScan::readInputFile(const char* inputFileName) {
+  ifstream inputFile;
+  inputFile.open(inputFileName, std::ios::binary);
+  // get file length
+  inputFile.seekg(0, std::ios::end);
+  size_t fileSize = inputFile.tellg();
+  inputFile.seekg(0, std::ios::beg);
+  char* buffer = new char[fileSize];
+  // hold the inputFile binary as a string
+  inputFile.read(buffer, fileSize);
+  inputFile.close();
+  _buffer = string(buffer, fileSize);
+}
+
+// ____________________________________________________________________________
 void VirusScan::readVirusSignatures(const char* virusSignaturesFileName) {
   string line;
   ifstream inputFile;
   inputFile.open(virusSignaturesFileName);
-  // ios::good returns true if none of the stream's error flags
-  // (eofbit, failbit and badbit) are set.
   while (inputFile.good()) {
     getline(inputFile, line);
-    // split the input line in virusname and -signature.
+    // split the input line in virusname and -signature. and convert the
+    // string signature to an char array
     splitVirusSignature(line);
   }
   inputFile.close();
@@ -101,82 +98,77 @@ void VirusScan::readVirusSignatures(const char* virusSignaturesFileName) {
 // ____________________________________________________________________________
 void VirusScan::splitVirusSignature(string line) {
   // find position of the tabulator, which seperates name an signatur.
-  size_t pos = line.find('\t');
+  int pos = line.find('\t');
   string sig = line.substr(pos+1);
   string name = line.substr(0, pos);
-
+  // ignore empty lines or lines without tab.
+  if (line.length() <= 0 || pos == -1) return;
   // remove \n at the end of every line.
   if (!sig.empty() && sig[sig.size() - 1] == '\n') {
     sig.erase(sig.size() - 1);
   }
-  // check if any siganture has special operators like '?*{}'.
-  checkSignature(sig, name);
-  // howMany();
-}
-
-
-// ____________________________________________________________________________
-void VirusScan::checkSignature(string sig, string name) {
-  // if the content is not found, the member value npos is returned.
-  // npos indicates the end of the string.
-  // size_t npos = -1;
-
-  if (sig.find('?') != npos) {
-    _signaturesWithQuestion.push_back(sig);
-    _virusNamesQuestion.push_back(name);
-  } else if (sig.find('*') != npos) {
-    _signaturesWithStar.push_back(sig);
-    _virusNamesStar.push_back(name);
-  } else if (sig.find(123) != npos) {
-    _signaturesWithBracket.push_back(sig);
-    _virusNamesBracket.push_back(name);
+  // fill nameMap with signatur = key and name = value
+  _virusNames[sig.c_str()] = name;
+  // use int, because stringstream handles each char as one single hex value.
+  int bytes;
+  stringstream ss;
+  // string to hex
+  ss << std::hex << sig.substr(0, 2);
+  // hex to int
+  ss >> bytes;
+  _itSignatures = _signatures.find(bytes);
+  if (_itSignatures == _signatures.end()) {
+    // set new key with new vector as value
+    Trie* trie = new Trie();
+    printf("add signature: %s\n", sig.substr(2).c_str());
+    trie->addWord(sig.substr(2));
+    if (trie->searchWord(sig.substr(2)) == true) {
+      printf("sig found\n");
+    }
+    _signatures[bytes] = trie;
+    // set first signature length
+    vector<int> v;
+    v.push_back(sig.length()-2);
+    _siglen[bytes] = v;
   } else {
-    _virusSignatures.push_back(sig);
-    _virusNames.push_back(name);
+    // key already exists. add new signature to existing vector.
+    _signatures[bytes]->addWord(sig.substr(2));
+    // set length of each signature
+    _siglen[bytes].push_back(sig.length()-2);
   }
 }
 
 // ____________________________________________________________________________
-// void VirusScan::scanInputFile() {
-//   // read and scan each inputFile
-//   for (size_t i = 0; i < _inputFileNames.size(); i++) {
-//     _inputFileName = _inputFileNames[i];
-//     readInputFile(_inputFileName);
-//     _infected = isInfected(_buffer);
-//     if (_infected == true) {
-//       _infectedFiles.push_back(_inputFileName);
-//     } else {
-//       _cleanFiles.push_back(_inputFileName);
-//     }
-//   }
-// }
+void VirusScan::scanInputFile() {
+  _infected = false;
 
-// ____________________________________________________________________________
-void VirusScan::readInputFile(const char* inputFileName) {
-  ifstream file;
-  file.open(inputFileName, std::ios::binary);
-  // get file length
-  file.seekg(0, std::ios::end);
-  size_t fileSize = file.tellg();
-  file.seekg(0, std::ios::beg);
-  // hold all the bytes of the inputFile
-  _buffer = new char[fileSize];
-  file.read(_buffer, fileSize);
+  // erstes byte aus dem buffer holen
+  // byte in signature map suchen
+  // buffer nach länge der signature länge in trie suchen
+  // wenn ja, dann name des virus aus map
+
+  for (size_t i = 0; i < _buffer.length(); i++) {
+    char byte = _buffer[i];
+    // get a possible trie
+    _itSignatures = _signatures.find(byte);
+    if (_itSignatures == _signatures.end()) {
+      // buffer byte doesn't match with any signature
+      continue;
+    } else {
+      for (size_t k = 0; k < _siglen[byte].size(); k++) {
+        // get length of a signature
+        size_t len = _siglen[byte][k];
+        // cut the buffer for each signature length
+        string tmp = _buffer.substr(i, len);
+        // check if the tmp buffer string matchs with a signature
+        // in the current trie
+        _infected = _itSignatures->second->searchWord(tmp);
+        if (_infected == true) {
+          // get the virusname for the current signature
+          string virusName = _virusNames[tmp];
+          printf("Found: %s\n", virusName.c_str());
+        }
+      }
+    }
+  }
 }
-
-// ____________________________________________________________________________
-// bool VirusScan::isInfected(char* buffer) {
-//   char* highNibble = 0xf0;
-//   char* lowNibble = 0x0f;
-//   size_t k = 0;
-//   string sig = _virusSignatures[0];
-//   for (size_t i = 0; i < strlen(buffer); i++) {
-//       if (buffer[i] == sig[k]) {
-//         k++;
-//         if (k == strlen(sig) return true;
-//       } else {
-//         k = 0;
-//       }
-//     }
-//   }
-// }

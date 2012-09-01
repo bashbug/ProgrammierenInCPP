@@ -7,11 +7,14 @@
 
 #include <gtest/gtest.h>
 #include <string>
+#include <map>
 #include <vector>
-#include <stack>
+#include "./Node.h"
+#include "./Trie.h"
 
 using std::vector;
 using std::string;
+using std::map;
 
 /* ************************************************************************* */
 /* class for finding viruses in a given inputfile or files.                  */
@@ -34,6 +37,10 @@ class VirusScan {
   void parseCommandLineArguments(int argc, char** argv);
   FRIEND_TEST(VirusScanTest, parseCommandLineArguments);
 
+  // read Inputfile as binary hex code and put the lines in a vector.
+  void readInputFile(const char* inputFile);
+  FRIEND_TEST(VirusScanTest, readInputFile);
+
   // read the file, which contains the virus signatures.
   void readVirusSignatures(const char* inputFileName);
   FRIEND_TEST(VirusScanTest, readVirusSignatures);
@@ -41,10 +48,6 @@ class VirusScan {
   // scan Inputfile for viruses.
   void scanInputFile();
   FRIEND_TEST(VirusScanTest, scanInputFile);
-
-  // read Inputfile as binary hex code and put the lines in a vector.
-  void readInputFile(const char* inputFile);
-  FRIEND_TEST(VirusScanTest, readInputFile);
 
   // prints logging information on the screen and in an output file
   // during the file scanning.
@@ -55,10 +58,6 @@ class VirusScan {
   // and clean files.
   void writeStatistic();
 
-  void howMany();
-  FRIEND_TEST(VirusScanTest, howMany);
-
-
  private:
   // print usage info and exit.
   void printUsageAndExit();
@@ -66,16 +65,6 @@ class VirusScan {
   // split the virus-signatures.txt in a name and a signature vector.
   void splitVirusSignature(string line);
   FRIEND_TEST(VirusScanTest, splitVirusSignature);
-
-  // check if a signature has special operators like '?*',
-  // and handle it.
-  void checkSignature(string sig, string name);
-  FRIEND_TEST(VirusScanTest, checkSignature);
-
-  // returns true, if an virus signature is matching with a line of
-  // the input file.
-  bool isInfected(char* buffer);
-  FRIEND_TEST(VirusScanTest, isInfected);
 
   // name of the file, which contains name and signature of each virus.
   char* _virusSignaturesFileName;
@@ -86,25 +75,18 @@ class VirusScan {
   // name of the current inpute file
   char* _inputFileName;
 
-  // current hex signature for scanning
-  char* _signature;
-  // the name of an specific virus
-  char* _virus;
-  // stores the name of normal viruses
-  vector<string> _virusNames;
-  // stores the name of special viruses
-  vector<string> _virusNamesQuestion;
-  vector<string> _virusNamesStar;
-  vector<string> _virusNamesBracket;
-  // hex-sequenz of every virus signature
-  vector<string> _virusSignatures;
-  // signatures with special operatores '?*{}'.
-  vector<string> _signaturesWithQuestion;
-  vector<string> _signaturesWithStar;
-  vector<string> _signaturesWithBracket;
+  // map for virusnames
+  map<string, string> _virusNames;
+  map<string, string>::iterator _itVirusNames;
+  // map for signatures
+  map<int, Trie*> _signatures;
+  map<int, Trie*>::iterator _itSignatures;
+  // map for the signatures lengths
+  map<int, vector<int> >_siglen;
+  map<int, vector<int> >::iterator _itSiglen;
 
   // the byte-sequenz of the inputfile
-  char* _buffer;
+  string _buffer;
 
   // stores filenames of all infected files
   vector<string> _infectedFiles;
