@@ -79,11 +79,11 @@ class VirusScan {
   map<string, string> _virusNames;
   map<string, string>::iterator _itVirusNames;
   // map for signatures
-  map<int, Trie*> _signatures;
-  map<int, Trie*>::iterator _itSignatures;
+  map<string, Trie*> _signatures;
+  map<string, Trie*>::iterator _itSignatures;
   // map for the signatures lengths
-  map<int, vector<int> >_siglen;
-  map<int, vector<int> >::iterator _itSiglen;
+  map<string, vector<int> >_siglen;
+  map<string, vector<int> >::iterator _itSiglen;
 
   // the byte-sequenz of the inputfile
   string _buffer;

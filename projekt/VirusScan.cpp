@@ -78,7 +78,16 @@ void VirusScan::readInputFile(const char* inputFileName) {
   // hold the inputFile binary as a string
   inputFile.read(buffer, fileSize);
   inputFile.close();
-  _buffer = string(buffer, fileSize);
+  string tmp;
+  for (size_t i = 0; i < fileSize; i++) {
+    stringstream ss;
+    tmp = "";
+    // set 0 hex char
+    ss << std::setfill('0') << std::setw(2) <<
+      std::hex << static_cast<int>(buffer[i]);
+    ss >> tmp;
+    _buffer.append(tmp);
+  }
 }
 
 // ____________________________________________________________________________
@@ -107,23 +116,17 @@ void VirusScan::splitVirusSignature(string line) {
   if (!sig.empty() && sig[sig.size() - 1] == '\n') {
     sig.erase(sig.size() - 1);
   }
-  // fill nameMap with signatur = key and name = value
-  _virusNames[sig.c_str()] = name;
-  // use int, because stringstream handles each char as one single hex value.
-  int bytes;
-  stringstream ss;
-  // string to hex
-  ss << std::hex << sig.substr(0, 2);
-  // hex to int
-  ss >> bytes;
+  // fill nameMap with signatur = key without first hex value and name = value
+  _virusNames[sig.substr(2)] = name;
+  string bytes = sig.substr(0, 2);
   _itSignatures = _signatures.find(bytes);
   if (_itSignatures == _signatures.end()) {
     // set new key with new vector as value
     Trie* trie = new Trie();
-    printf("add signature: %s\n", sig.substr(2).c_str());
+    // printf("add signature: %s\n", sig.substr(2).c_str());
     trie->addWord(sig.substr(2));
     if (trie->searchWord(sig.substr(2)) == true) {
-      printf("sig found\n");
+      // printf("sig found\n");
     }
     _signatures[bytes] = trie;
     // set first signature length
@@ -147,19 +150,19 @@ void VirusScan::scanInputFile() {
   // buffer nach länge der signature länge in trie suchen
   // wenn ja, dann name des virus aus map
 
-  for (size_t i = 0; i < _buffer.length(); i++) {
-    char byte = _buffer[i];
+  for (size_t i = 0; i < _buffer.length(); i+=2) {
+    string bytes = _buffer.substr(i, 2);
     // get a possible trie
-    _itSignatures = _signatures.find(byte);
+    _itSignatures = _signatures.find(bytes);
     if (_itSignatures == _signatures.end()) {
       // buffer byte doesn't match with any signature
       continue;
     } else {
-      for (size_t k = 0; k < _siglen[byte].size(); k++) {
+      for (size_t k = 0; k < _siglen[bytes].size(); k++) {
         // get length of a signature
-        size_t len = _siglen[byte][k];
+        size_t len = _siglen[bytes][k];
         // cut the buffer for each signature length
-        string tmp = _buffer.substr(i, len);
+        string tmp = _buffer.substr(i+2, len);
         // check if the tmp buffer string matchs with a signature
         // in the current trie
         _infected = _itSignatures->second->searchWord(tmp);
