@@ -31,23 +31,19 @@ VirusScan::~VirusScan() {
 void VirusScan::parseCommandLineArguments(int argc, char** argv) {
   struct option options[] = {
     { "virusSignatures", 1, NULL, 'v' },
-    { "log-file", 1, NULL, 'l' },
     { NULL, 0, NULL, 0 }
   };
   optind = 1;  // if the loop starts again, than optind = X without reset
   while (true) {
-    char opt = getopt_long(argc, argv, "v:l:", options, NULL);
+    char opt = getopt_long(argc, argv, "v:", options, NULL);
     if (opt == -1) break;
     switch (opt) {
       case 'v':
         _virusSignaturesFileName = optarg;
         break;
-      case 'l':
-        _logFileName = optarg;
-        break;
     }
   }
-  if (argc <= 2) printUsageAndExit();
+  if (optind + 1 != argc) printUsageAndExit();
   // every non-option argument is interpreted as an inputfile
   for (int i = 0; i < argc-optind; i++) {
     _inputFileNames.push_back(argv[optind + i]);
@@ -68,6 +64,8 @@ void VirusScan::printUsageAndExit() {
 
 // ____________________________________________________________________________
 void VirusScan::readInputFile(const char* inputFileName) {
+  _inputFileName = inputFileName;
+  printf("[INFO] read the input file %s \n", inputFileName);
   ifstream inputFile;
   inputFile.open(inputFileName, std::ios::binary);
   // get file length
@@ -92,6 +90,7 @@ void VirusScan::readInputFile(const char* inputFileName) {
 
 // ____________________________________________________________________________
 void VirusScan::readVirusSignatures(const char* virusSignaturesFileName) {
+  printf("[INFO] read the given signatures file %s\n", virusSignaturesFileName);
   string line;
   ifstream inputFile;
   inputFile.open(virusSignaturesFileName);
@@ -143,7 +142,10 @@ void VirusScan::splitVirusSignature(string line) {
 
 // ____________________________________________________________________________
 void VirusScan::scanInputFile() {
+  printf("[INFO] scan input file %s\n", _inputFileName);
   _infected = false;
+  string tmp, bytes;
+  double progress = 0;
 
   // erstes byte aus dem buffer holen
   // byte in signature map suchen
@@ -151,18 +153,19 @@ void VirusScan::scanInputFile() {
   // wenn ja, dann name des virus aus map
 
   for (size_t i = 0; i < _buffer.length(); i+=2) {
-    string bytes = _buffer.substr(i, 2);
+    bytes = _buffer.substr(i, 2);
+    if (i % 100 == 0) {
+      progress = static_cast<double>(i) / static_cast<double>(_buffer.length());
+      printf("%-2.2f\r", progress * 100.0f);
+    }
     // get a possible trie
     _itSignatures = _signatures.find(bytes);
-    if (_itSignatures == _signatures.end()) {
-      // buffer byte doesn't match with any signature
-      continue;
-    } else {
+    if (_itSignatures != _signatures.end()) {
       for (size_t k = 0; k < _siglen[bytes].size(); k++) {
         // get length of a signature
-        size_t len = _siglen[bytes][k];
+        int& len = _siglen[bytes][k];
         // cut the buffer for each signature length
-        string tmp = _buffer.substr(i+2, len);
+        tmp = _buffer.substr(i+2, len);
         // check if the tmp buffer string matchs with a signature
         // in the current trie
         _infected = _itSignatures->second->searchWord(tmp);

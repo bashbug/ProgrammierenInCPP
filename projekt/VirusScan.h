@@ -58,6 +58,13 @@ class VirusScan {
   // and clean files.
   void writeStatistic();
 
+  // contains all filenames from the commandline
+  vector<char*> _inputFileNames;
+  // name of the current inpute file
+  const char* _inputFileName;
+  // name of the file, which contains name and signature of each virus.
+  char* _virusSignaturesFileName;
+
  private:
   // print usage info and exit.
   void printUsageAndExit();
@@ -66,14 +73,8 @@ class VirusScan {
   void splitVirusSignature(string line);
   FRIEND_TEST(VirusScanTest, splitVirusSignature);
 
-  // name of the file, which contains name and signature of each virus.
-  char* _virusSignaturesFileName;
   // name of the logfile, set from user at commandline
   char* _logFileName;
-  // contains all filenames from the commandline
-  vector<char*> _inputFileNames;
-  // name of the current inpute file
-  char* _inputFileName;
 
   // map for virusnames
   map<string, string> _virusNames;
