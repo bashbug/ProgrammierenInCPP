@@ -11,16 +11,20 @@ TEST(VirusScanTest, VirusScan) {
 TEST(VirusScanTest, parseCommandLineArguments) {
   {
     VirusScan v;
-    int argc = 3;
-    char* argv[3] = {
+    int argc = 5;
+    char* argv[5] = {
       const_cast<char*>("prog"),
-      const_cast<char*>("--target=test.txt"),
-      const_cast<char*>("--signatures=signatures.txt")
+      const_cast<char*>("--md5=md5Signatures.txt"),
+      const_cast<char*>("--hex=hexSignatures.txt"),
+      const_cast<char*>("--log=log.txt"),
+      const_cast<char*>("test.txt"),
     };
     v.parseCommandLineArguments(argc, argv);
 
-    ASSERT_STREQ("test.txt", v._fileNameTarget);
-    ASSERT_STREQ("signatures.txt", v._fileNameSignatures);
+    ASSERT_STREQ("test.txt", v._fileNames[0]);
+    ASSERT_STREQ("log.txt", v._log);
+    ASSERT_STREQ("md5Signatures.txt", v._fileNameMD5Signatures);
+    ASSERT_STREQ("hexSignatures.txt", v._fileNameSignatures);
   }
 }
 
@@ -37,12 +41,9 @@ TEST(VirusScanTest, parseCommandLineArguments) {
 
 TEST(VirusScanTest, scanFile) {
   VirusScan v;
-  printf("[TEST] reading and converting signatures ...\n");
-  v.readVirusSignaturesFile("virus-signatures.txt");
-  printf("[TEST] reading file ...\n");
-  v.readTargetFile("testfile2.txt");
-  // v.readTargetFile("virussum.doc");
-  printf("[TEST] scanning file ...\n");
+  v.readVirusSignaturesFile("data/virus-signatures.txt");
+  // v.readTargetFile("data/testfile2.txt");
+  v.readTargetFile("data/virussum.doc");
   v.scanFile();
   ASSERT_TRUE(true);
 }

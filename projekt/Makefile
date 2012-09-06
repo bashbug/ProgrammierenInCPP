@@ -1,28 +1,31 @@
-CXX = g++ -Wall -g
-OBJECTS = VirusScan.o Trie.o Node.o
-PROG = VirusScan
+CXX = g++ -g -Wall
+MAIN_BINARIES = $(basename $(wildcard *Main.cpp))
+TEST_BINARIES = $(basename $(wildcard *Test.cpp))
 HEADERS = $(wildcard *.h)
+OBJECTS = $(addsuffix .o, $(basename $(filter-out %Main.cpp %Test.cpp,$(wildcard *.cpp))))
+
+.PRECIOUS: %.o
 
 all: compile checkstyle test
 
-compile: $(PROG)Main $(PROG)Test
+compile: $(MAIN_BINARIES) $(TEST_BINARIES)
 
-%.o: %.cpp $(HEADERS)
-	$(CXX) -c $<
+checkstyle:
+	python ../cpplint.py *.h *.cpp
 
-%Main: $(PROG)Main.o $(OBJECTS)
+test: $(TEST_BINARIES)
+	for T in $(TEST_BINARIES); do ./$$T; done
+
+clean:
+	rm -f *Main
+	rm -f *Test
+	rm -f *.o
+
+%Main: %Main.o $(OBJECTS)
 	$(CXX) -o $@ $^
 
 %Test: %Test.o $(OBJECTS)
 	$(CXX) -o $@ $^ -lgtest -lgtest_main -lpthread
 
-checkstyle:
-	python ../cpplint.py *.h *.cpp
-
-test: $(PROG)Test
-	./$(PROG)Test
-
-clean:
-	rm -f $(PROG)Main
-	rm -f $(PROG)Test
-	rm -f *.o
+%.o: %.cpp $(HEADERS)
+	$(CXX) -c $<

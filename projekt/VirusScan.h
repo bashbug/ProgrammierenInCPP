@@ -2,27 +2,20 @@
 // Chair of Algorithms and Data Structures.
 // Author: Anastasia Tondera <tonderaa@informatik.uni-freiburg.de>.
 
-#ifndef VIRUSSCAN_VIRUSSCAN_H_
-#define VIRUSSCAN_VIRUSSCAN_H_
+#ifndef PROJEKT_VIRUSSCAN_H_
+#define PROJEKT_VIRUSSCAN_H_
 
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
-#include <map>
+#include <list>
 #include "./SignaturesList.h"
 
 using std::string;
 using std::vector;
-using std::map;
+using std::list;
 
 class VirusScan {
-  const char* _fileNameTarget;
-  const char* _fileNameSignatures;
-  char* _fileBuffer;
-  size_t _fileLength;
-  SignaturesList _virusSignatures;
-  vector<SignaturesList*> _matchTable;
-
  public:
   VirusScan();
   ~VirusScan();
@@ -31,11 +24,15 @@ class VirusScan {
   void parseCommandLineArguments(int argc, char** argv);
   FRIEND_TEST(VirusScanTest, parseCommandLineArguments);
 
+  void readMD5VirusSignaturesFile(const char* fileName);
+
   void readVirusSignaturesFile(const char* fileName);
   FRIEND_TEST(VirusScanTest, readVirusSignaturesFile);
 
   void readTargetFile(const char* fileName);
   FRIEND_TEST(VirusScanTest, readTargetFile);
+
+  void printUsageAndExit();
 
   void printProgress(size_t current, size_t total);
 
@@ -43,6 +40,15 @@ class VirusScan {
 
   void scanFile();
   FRIEND_TEST(VirusScanTest, scanFile);
+
+  vector<const char*> _fileNames;
+  const char* _fileNameMD5Signatures;
+  const char* _fileNameSignatures;
+  const char* _log;
+  char* _fileBuffer;
+  size_t _fileLength;
+  SignaturesList _virusSignatures;
+  list<SignaturesList*> _matchTable;
 };
 
-#endif  // VIRUSSCAN_VIRUSSCAN_H_
+#endif  // PROJEKT_VIRUSSCAN_H_

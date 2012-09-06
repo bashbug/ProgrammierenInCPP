@@ -2,8 +2,8 @@
 // Chair of Algorithms and Data Structures.
 // Author: Anastasia Tondera <tonderaa@informatik.uni-freiburg.de>.
 
-#ifndef VIRUSSCAN_SIGNATURESLIST_H_
-#define VIRUSSCAN_SIGNATURESLIST_H_
+#ifndef PROJEKT_SIGNATURESLIST_H_
+#define PROJEKT_SIGNATURESLIST_H_
 
 #include <gtest/gtest.h>
 #include <string>
@@ -46,4 +46,4 @@ class SignaturesList {
   FRIEND_TEST(SignaturesListTest, hexToDec);
 };
 
-#endif  // VIRUSSCAN_SIGNATURESLIST_H_
+#endif  // PROJEKT_SIGNATURESLIST_H_

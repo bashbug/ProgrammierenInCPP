@@ -9,14 +9,14 @@
 #include <string>
 #include <algorithm>
 #include <vector>
-#include <map>
+#include <list>
 #include <sstream>
 #include "./VirusScan.h"
 
 using std::ifstream;
 using std::ios;
 using std::string;
-using std::map;
+using std::list;
 using std::stringstream;
 
 VirusScan::VirusScan() {
@@ -27,60 +27,91 @@ VirusScan::~VirusScan() {
 
 void VirusScan::parseCommandLineArguments(int argc, char** argv) {
   struct option options[] = {
-    {"target", 1, NULL, 't'},
-    {"signatures", 1, NULL, 's'},
-    {NULL, 0, NULL, 0}
+    { "md5", 1, NULL, 'm' },
+    { "hex", 1, NULL, 'h' },
+    { "log", 1, NULL, 'l' },
+    { NULL, 0, NULL, 0 }
   };
 
   optind = 1;
 
   while (true) {
-    char opt = getopt_long(argc, argv, "t:s:", options, NULL);
+    char opt = getopt_long(argc, argv, "m:h:l:", options, NULL);
     if (opt == -1) break;
-
     switch (opt) {
-      case 't':
-        _fileNameTarget = optarg;
+      case 'l':
+        _log = optarg;
         break;
-      case 's':
+      case 'm':
+        _fileNameMD5Signatures = optarg;
+      case 'h':
         _fileNameSignatures = optarg;
         break;
       default:
-        printf("Ooops wrong argument found\n");
+        printUsageAndExit();
     }
+  }
+
+  if (optind + 1 != argc) printUsageAndExit();
+  // every non-option argument is interpreted as an inputfile
+  for (int i = 0; i < argc-optind; i++) {
+    _fileNames.push_back(argv[optind + i]);
   }
 }
 
-void VirusScan::prepareScan() {
-  readVirusSignaturesFile(_fileNameSignatures);
-  readTargetFile(_fileNameTarget);
+// _____________________________________________________________________________
+void VirusScan::printUsageAndExit() {
+  fprintf(stderr,
+          "Usage: :/VirusScan -m [MD5_SIGNATURES FILE] -h [HEX_SIGNATURES FILE]"
+          "                 \n-l [LOGFILE] [TARGETFILE 1] [TARGETFILE 2]...\n\n"
+          "DESCRIPTION: \n"
+          "  VirusScan scanns the named input FILEs for virues. \n"
+          "OPTIONS: \n"
+          "  --md5, -m        : contains md5 signatures and virusnames. \n"
+          "  --hex, -h        : contains hex signatures and virusnames. \n"
+          "  --log, -l        : contains logging information. \n");
+  exit(1);
+}
+
+// void VirusScan::prepareScan() {
+//   readVirusSignaturesFile(_fileNameSignatures);
+//   readTargetFile(_fileNameTarget);
+// }
+
+void VirusScan::readMD5VirusSignaturesFile(const char* fileName) {
+  // printf("[INFO] reading and converting MD5 signatures ...\n");
+  // size_t first;
+  // size_t second;
+  // size_t i = 0;
+  // string line;
+  // string signature;
+  // string signatureConv;
+  // ifstream file;
+  // file.open(fileName);
+
+  // while (file.good()) {
+  //   getline(file, line);
+  //     signature = substring(0, 32);
+
+  // }
 }
 
 void VirusScan::readVirusSignaturesFile(const char* fileName) {
+  printf("[INFO] reading and converting HEX signatures ...\n");
   size_t tab;
   size_t i = 0;
   string line;
   string signature;
   string signatureConv;
   ifstream file;
-  map<char, vector<string> >::iterator it;
   file.open(fileName);
 
   while (file.good()) {
     getline(file, line);
-
     tab = line.find('\t');
-
-    if (++i % 100 == 0) {
-      printf("       processing signature #%zu\r", i);
-    }
-
     if (line.length() == 0 || tab < 0) continue;
-
     signature = line.substr(tab+1, line.length());
-
     string name = line.substr(0, tab);
-
     _virusSignatures.add(signature, name);
   }
 
@@ -98,6 +129,7 @@ void VirusScan::printProgress(size_t current, size_t total) {
 }
 
 void VirusScan::readTargetFile(const char* fileName) {
+  printf("[INFO] reading file ...\n");
   string line;
   ifstream file;
   file.open(fileName);
@@ -114,6 +146,7 @@ void VirusScan::readTargetFile(const char* fileName) {
 }
 
 void VirusScan::scanFile() {
+  printf("[INFO] scanning file ...\n");
   unsigned char ch;
   double progress = 0;
   SignaturesList* ptr = NULL;
@@ -137,7 +170,7 @@ void VirusScan::scanFile() {
     }
 
     _tmpTable.clear();
-    for (vector<SignaturesList*>::iterator it = _matchTable.begin();
+    for (list<SignaturesList*>::iterator it = _matchTable.begin();
       it != _matchTable.end(); ) {
       mptr = (*it)->getPointer(ch);
 
