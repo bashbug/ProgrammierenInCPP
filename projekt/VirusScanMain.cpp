@@ -7,4 +7,9 @@
 int main(int argc, char** argv) {
   VirusScan v;
   v.parseCommandLineArguments(argc, argv);
+  v.readVirusSignatures(v._virusSignaturesFileName);
+  for (size_t i = 0; i < v._inputFileNames.size(); i++) {
+    v.readInputFile(v._inputFileNames[i]);
+    v.scanInputFile();
+  }
 }
